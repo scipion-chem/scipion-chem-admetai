@@ -47,7 +47,6 @@ class ProtAdmetAi(EMProtocol):
 
     """
     _label = 'ADMET toxicity prediction'
-
     # -------------------------- DEFINE param functions ----------------------
 
     def _defineParams(self, form):

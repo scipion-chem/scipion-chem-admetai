@@ -27,19 +27,12 @@
 from pyworkflow.tests import setupTestProject, DataSet, BaseTest
 
 # Scipion chem imports
-from pwchem.protocols import ProtChemImportSmallMolecules, ProtDefineStructROIs
-from pwem.protocols import ProtImportPdb
+from pwchem.protocols import ProtChemImportSmallMolecules
 from pwchem.utils import assertHandle
 
-from ..protocols import ProtDrugclip
+from ..protocols import ProtAdmetAi
 
-defROIsStr = '''1) Coordinate: {"X": 45, "Y": 65, "Z": 60}
-2) Residues: {"model": 0, "chain": "A", "index": "1-4", "residues": "VLSP"}
-3) Ligand: {"molName": "HEM", "remove": "True"}
-4) PPI: {"chain1": "0-A", "chain2": "0-B", "interDist": "5.0"}
-5) Near_Residues: {"residues": "cys, cys", "distance": "5.0", "linkage": "Single"}'''
-
-class TestDrugclip(BaseTest):
+class TestAdmetai(BaseTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -48,9 +41,7 @@ class TestDrugclip(BaseTest):
         setupTestProject(cls)
 
         cls._runImportSmallMols()
-        cls._runImportPDB()
         cls._waitOutput(cls.protImportSmallMols, 'outputSmallMolecules', sleepTime=5)
-        cls._waitOutput(cls.protImportPDB, 'outputAtomStruct', sleepTime=5)
 
 
     @classmethod
@@ -60,36 +51,18 @@ class TestDrugclip(BaseTest):
             filesPath=cls.dsLig.getFile('mol2'))
         cls.proj.launchProtocol(cls.protImportSmallMols, wait=False)
 
-    @classmethod
-    def _runImportPDB(cls):
-        cls.protImportPDB = cls.newProtocol(
-            ProtImportPdb, inputPdbData=1,
-            pdbFile=cls.ds.getFile('PDBx_mmCIF/5ni1.pdb'))
-        cls.proj.launchProtocol(cls.protImportPDB, wait=True)
 
-    @classmethod
-    def _runDefStructROIs(cls):
-        cls.protDef = cls.newProtocol(
-            ProtDefineStructROIs,
-            inputAtomStruct=cls.protImportPDB.outputPdb,
-            inROIs=defROIsStr)
-        cls.proj.launchProtocol(cls.protDef)
+    def _runAdmetAi(self):
+        protAdmet = self.newProtocol(ProtAdmetAi)
 
-    def _runDrugclip(self):
-        protDc = self.newProtocol(ProtDrugclip)
+        protAdmet.useGpu.set(False)
+        protAdmet.inputSmallMolecules.set(self.protImportSmallMols)
+        protAdmet.inputSmallMolecules.setExtended('outputSmallMolecules')
 
-        protDc.pockets.set(self.protDef)
-        protDc.pockets.setExtended('outputStructROIs')
-        protDc.molecules.set(self.protImportSmallMols)
-        protDc.molecules.setExtended('outputSmallMolecules')
-
-        self.proj.launchProtocol(protDc, wait=False)
-        return protDc
+        self.proj.launchProtocol(protAdmet, wait=False)
+        return protAdmet
 
     def test(self):
-        self._runDefStructROIs()
-        self._waitOutput(self.protDef, 'outputStructROIs', sleepTime=10)
-
-        protDc = self._runDrugclip()
-        self._waitOutput(protDc, 'outputStructROIs', sleepTime=10)
-        assertHandle(self.assertIsNotNone, getattr(protDc, 'outputStructROIs', None))
+        protAdmet = self._runAdmetAi()
+        self._waitOutput(protAdmet, 'outputSmallMolecules', sleepTime=10)
+        assertHandle(self.assertIsNotNone, getattr(protAdmet, 'outputSmallMolecules', None))
