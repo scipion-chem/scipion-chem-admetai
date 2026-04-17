@@ -177,7 +177,7 @@ class ProtAdmetAi(EMProtocol):
 
     # --------------------------- INFO functions -----------------------------------
     def _summary(self):
-        summary = ["Results csv written in protocols path: results.csv"]
+        summary = [f"Full results written in {self._getPath('admetai_predictions.csv')}"]
         return summary
 
     def _methods(self):
