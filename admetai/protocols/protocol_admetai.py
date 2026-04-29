@@ -69,6 +69,8 @@ class ProtAdmetAi(EMProtocol):
 
         form.addParam('physchem', params.BooleanParam, label='Include physicochemical properties: ', default=True,
                       help='Whether to include physicochemical properties in the predictions.')
+        form.addParam('allColumns', params.BooleanParam, label='Include all predictions in output: ', default=False, expertLevel=params.LEVEL_ADVANCED,
+                      help='Whether to include all prediction columns in scipion output.')
         form.addParam('atcCode', params.StringParam, default='', expertLevel=params.LEVEL_ADVANCED,
                        label="ATC code to filter the DrugBank reference: ",
                        help="The ATC code to filter the DrugBank reference set by. If None, the entire DrugBank reference set will be used.")
@@ -163,11 +165,24 @@ class ProtAdmetAi(EMProtocol):
 
             newMol = mol.clone()
 
-            setattr(newMol, 'AMES', Float(row['AMES']))
-            setattr(newMol, 'DILI', Float(row['DILI']))
-            setattr(newMol, 'hERG', Float(row['hERG']))
-            setattr(newMol, 'HIA_Hou', Float(row['HIA_Hou']))
-            setattr(newMol, 'CYP3A4_Veith', Float(row['CYP3A4_Veith']))
+            if not self.allColumns.get():
+                setattr(newMol, 'AMES', Float(row['AMES']))
+                setattr(newMol, 'DILI', Float(row['DILI']))
+                setattr(newMol, 'hERG', Float(row['hERG']))
+                setattr(newMol, 'HIA_Hou', Float(row['HIA_Hou']))
+                setattr(newMol, 'CYP3A4_Veith', Float(row['CYP3A4_Veith']))
+            else:
+                for col in df.columns:
+                    if col == 'smiles':
+                        continue
+                    value = row[col]
+                    if value is None or (isinstance(value, float) and pd.isna(value)):
+                        continue
+                    try:
+                        value = float(value)
+                    except (ValueError, TypeError):
+                        pass
+                    setattr(newMol, f'{col}', Float(value))
 
             outMols.append(newMol)
 
