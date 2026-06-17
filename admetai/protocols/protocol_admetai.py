@@ -43,7 +43,98 @@ RDKIT, OPENBABEL = 0, 1
 
 class ProtAdmetAi(EMProtocol):
     """
+    AI Generated:
 
+    ADMET-AI Toxicity Prediction Protocol
+
+This protocol performs ADMET (Absorption, Distribution, Metabolism, Excretion, Toxicity)
+property prediction for a set of small molecules using the ADMET-AI framework.
+
+It converts input molecular structures into SMILES format, runs the ADMET-AI prediction
+pipeline, and integrates the resulting toxicity and pharmacokinetic descriptors back into
+a Scipion-compatible SetOfSmallMolecules.
+
+Core Concepts
+-------------
+ADMET Prediction:
+    Estimates key drug-like and toxicity-related properties, including:
+    - AMES mutagenicity
+    - DILI (drug-induced liver injury risk)
+    - hERG cardiotoxicity risk
+    - Human intestinal absorption (HIA)
+    - CYP3A4 inhibition
+
+SMILES Conversion:
+    Input molecules are converted into SMILES representations using OpenBabel,
+    which are required for ADMET-AI inference.
+
+Machine Learning Inference:
+    ADMET-AI models are executed through an external conda environment,
+    optionally using GPU acceleration.
+
+Result Mapping:
+    Predictions are mapped back to the original molecules and stored as
+    attributes in Scipion SmallMolecule objects.
+
+Workflow
+--------
+1. Input preparation:
+    A SetOfSmallMolecules is provided as input.
+
+2. Structure conversion:
+    Input molecules are copied and converted into SMILES format using OpenBabel.
+
+3. SMILES export:
+    A CSV file containing SMILES strings is generated.
+
+4. ADMET-AI execution:
+    The ADMET-AI predictor is executed on the SMILES dataset, producing:
+    - admetai_predictions.csv
+
+5. Result parsing:
+    The output CSV is parsed using pandas.
+
+6. Output integration:
+    Predictions are mapped back to input molecules and stored as:
+    - individual toxicity and ADMET properties (selected or full set)
+
+Input
+-----
+- inputSmallMolecules:
+    SetOfSmallMolecules containing molecules to be evaluated.
+
+Parameters
+----------
+- physchem:
+    Include physicochemical descriptors in the prediction output.
+
+- allColumns:
+    If True, all ADMET-AI output columns are added to each molecule.
+    If False, only key toxicity-related endpoints are stored.
+
+- atcCode:
+    Optional ATC code filter for DrugBank reference subset.
+
+- useGpu / gpuList:
+    GPU configuration for accelerating ADMET-AI inference.
+
+Output
+------
+- outputSmallMolecules:
+    SetOfSmallMolecules where each molecule includes predicted properties such as:
+    - AMES
+    - DILI
+    - hERG
+    - HIA_Hou
+    - CYP3A4_Veith
+    (or full ADMET-AI prediction vector if allColumns=True)
+
+Use Cases
+---------
+- Early-stage drug discovery toxicity screening
+- Filtering compound libraries based on safety profiles
+- Prioritization of molecules for docking or synthesis
+- Integration of ADMET predictions into multi-step Scipion workflows
 
     """
     _label = 'ADMET toxicity prediction'
