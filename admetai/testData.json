@@ -1,0 +1,15 @@
+{
+	"datasets": ["model_building_tutorial","smallMolecules"],
+	"skippable": {
+		"gpu": [
+			"test_admetai.TestAdmetai"
+
+		],
+		"dependencies": [
+
+		],
+		"others": [
+
+		]
+	}
+}
